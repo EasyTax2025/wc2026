@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIFA 2026 World Cup Predictor</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0a0a0a;color:#fff;min-height:100vh}
+.hero{background:linear-gradient(135deg,#003580 0%,#005baa 50%,#00a651 100%);padding:2rem 1rem 1.5rem;text-align:center}
+.hero-title{font-size:26px;font-weight:700;margin-bottom:4px}
+.hero-sub{font-size:13px;opacity:0.8;margin-bottom:1rem}
+.progress-wrap{background:rgba(255,255,255,0.2);border-radius:999px;height:6px;max-width:320px;margin:0 auto}
+.progress-fill{height:6px;border-radius:999px;background:#fff;transition:width 0.4s}
+.stage-pill{display:inline-block;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:999px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:4px 14px;margin-bottom:10px}
+.container{max-width:480px;margin:0 auto;padding:1.25rem 1rem 3rem}
+.group-block{background:#141414;border:1px solid #222;border-radius:14px;padding:1rem;margin-bottom:0.75rem}
+.group-label{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.group-count{font-size:10px;color:#555}
+.team-btn{width:100%;text-align:left;padding:10px 14px;margin-bottom:6px;border:1px solid #2a2a2a;border-radius:10px;font-size:13px;cursor:pointer;background:#1a1a1a;color:#fff;display:flex;align-items:center;gap:10px;transition:all 0.15s;font-family:inherit}
+.team-btn:last-child{margin-bottom:0}
+.team-btn:hover{background:#222;border-color:#444}
+.team-btn.first{background:#003580;border-color:#005baa;font-weight:600}
+.team-btn.second{background:#1a4a1a;border-color:#00a651;font-weight:600}
+.team-btn.locked{opacity:0.35;cursor:default;pointer-events:none}
+.badge{margin-left:auto;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px}
+.badge.b1{background:#005baa;color:#fff}
+.badge.b2{background:#00a651;color:#fff}
+.flag-span{font-size:18px}
+.match-card{background:#141414;border:1px solid #222;border-radius:14px;padding:1rem;margin-bottom:0.75rem}
+.match-label{font-size:10px;color:#555;text-align:center;margin-bottom:8px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase}
+.match-row{display:grid;grid-template-columns:1fr 36px 1fr;align-items:center;gap:8px}
+.match-team-btn{width:100%;padding:10px 8px;border:1px solid #2a2a2a;border-radius:10px;font-size:12px;cursor:pointer;background:#1a1a1a;color:#fff;text-align:center;line-height:1.4;font-family:inherit;transition:all 0.15s}
+.match-team-btn:hover{background:#222;border-color:#444}
+.match-team-btn.winner{background:#003580;border-color:#005baa;font-weight:600}
+.vs{font-size:11px;color:#555;font-weight:700;text-align:center}
+.advance-btn{width:100%;padding:14px;margin-top:1rem;border:none;border-radius:12px;background:linear-gradient(135deg,#005baa,#00a651);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.15s}
+.advance-btn:hover{opacity:0.9}
+.note{font-size:11px;color:#555;text-align:center;margin-top:0.75rem}
+.champion-wrap{text-align:center;padding:2.5rem 1rem}
+.trophy-flag{font-size:72px;margin-bottom:1rem;display:block}
+.champ-label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:8px}
+.champ-name{font-size:28px;font-weight:700;margin-bottom:0.5rem}
+.champ-tagline{font-size:13px;color:#888;margin-bottom:1.5rem}
+.share-row{display:flex;flex-direction:column;gap:10px;max-width:280px;margin:0 auto}
+.share-btn{padding:13px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;border:none;transition:opacity 0.15s}
+.share-btn.primary{background:linear-gradient(135deg,#005baa,#00a651);color:#fff}
+.share-btn.secondary{background:#1a1a1a;border:1px solid #333;color:#fff}
+.final-card{background:linear-gradient(135deg,rgba(0,53,128,0.3),rgba(0,166,81,0.3));border:1px solid #005baa;border-radius:14px;padding:1.25rem;margin-bottom:1rem}
+.final-label{font-size:11px;font-weight:700;color:#4fc3f7;text-transform:uppercase;letter-spacing:0.1em;text-align:center;margin-bottom:12px}
+.toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:#005baa;color:#fff;padding:10px 22px;border-radius:999px;font-size:13px;font-weight:600;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:999;white-space:nowrap}
+.toast.show{opacity:1}
+.round-header{font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.75rem;margin-top:0.25rem}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="stage-pill" id="stage-pill">Group Stage</div>
+  <div class="hero-title">FIFA World Cup 2026</div>
+  <div class="hero-sub" id="hero-sub">Pick the top 2 teams from each group</div>
+  <div class="progress-wrap"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+</div>
+<div class="container" id="main-content"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const groups = [
+  {name:"A", teams:[{n:"Mexico",f:"🇲🇽"},{n:"South Korea",f:"🇰🇷"},{n:"South Africa",f:"🇿🇦"},{n:"Czech Rep.",f:"🇨🇿"}]},
+  {name:"B", teams:[{n:"Canada",f:"🇨🇦"},{n:"Switzerland",f:"🇨🇭"},{n:"Qatar",f:"🇶🇦"},{n:"Bosnia-Herz.",f:"🇧🇦"}]},
+  {name:"C", teams:[{n:"Brazil",f:"🇧🇷"},{n:"Morocco",f:"🇲🇦"},{n:"Scotland",f:"🏴󠁧󠁢󠁳󠁣󠁴󠁿"},{n:"Haiti",f:"🇭🇹"}]},
+  {name:"D", teams:[{n:"USA",f:"🇺🇸"},{n:"Paraguay",f:"🇵🇾"},{n:"Australia",f:"🇦🇺"},{n:"Turkiye",f:"🇹🇷"}]},
+  {name:"E", teams:[{n:"Germany",f:"🇩🇪"},{n:"Curacao",f:"🇨🇼"},{n:"Ivory Coast",f:"🇨🇮"},{n:"Ecuador",f:"🇪🇨"}]},
+  {name:"F", teams:[{n:"Netherlands",f:"🇳🇱"},{n:"Japan",f:"🇯🇵"},{n:"Tunisia",f:"🇹🇳"},{n:"Sweden",f:"🇸🇪"}]},
+  {name:"G", teams:[{n:"Belgium",f:"🇧🇪"},{n:"Egypt",f:"🇪🇬"},{n:"Iran",f:"🇮🇷"},{n:"New Zealand",f:"🇳🇿"}]},
+  {name:"H", teams:[{n:"Spain",f:"🇪🇸"},{n:"Cape Verde",f:"🇨🇻"},{n:"Saudi Arabia",f:"🇸🇦"},{n:"Uruguay",f:"🇺🇾"}]},
+  {name:"I", teams:[{n:"France",f:"🇫🇷"},{n:"Senegal",f:"🇸🇳"},{n:"Norway",f:"🇳🇴"},{n:"Iraq",f:"🇮🇶"}]},
+  {name:"J", teams:[{n:"Argentina",f:"🇦🇷"},{n:"Algeria",f:"🇩🇿"},{n:"Austria",f:"🇦🇹"},{n:"Jordan",f:"🇯🇴"}]},
+  {name:"K", teams:[{n:"Portugal",f:"🇵🇹"},{n:"Colombia",f:"🇨🇴"},{n:"Uzbekistan",f:"🇺🇿"},{n:"DR Congo",f:"🇨🇩"}]},
+  {name:"L", teams:[{n:"England",f:"🏴󠁧󠁢󠁥󠁮󠁧󠁿"},{n:"Croatia",f:"🇭🇷"},{n:"Ghana",f:"🇬🇭"},{n:"Panama",f:"🇵🇦"}]},
+];
+
+// State
+// gPicks[groupName] = [first, second]  (ordered: first click = 1st, second = 2nd)
+let gPicks   = {};   // {A: ["Brazil","Morocco"], ...}
+let r32Picks = {};   // {0..15: teamName}
+let r16Picks = {};   // {0..7:  teamName}
+let qfPicks  = {};   // {0..3:  teamName}
+let sfPicks  = {};   // {0..1:  teamName}
+let finPick  = null;
+let stage    = 0;
+
+const STAGE_NAMES = ["Group Stage","Round of 32","Round of 16","Quarterfinals","Semifinals","Final"];
+const STAGE_SUBS  = [
+  "Pick the top 2 teams from each group",
+  "Round of 32 — 24 group qualifiers + 8 wildcards!",
+  "Round of 16 — pick your 8 winners",
+  "Quarterfinals — pick your 4 winners",
+  "Semifinals — pick your 2 finalists",
+  "Pick your World Cup Champion! 🏆"
+];
+
+function getTeam(name) {
+  for (const g of groups) {
+    const t = g.teams.find(x => x.n === name);
+    if (t) return t;
+  }
+  return {n: name, f: "🌍"};
+}
+
+function render() {
+  document.getElementById('stage-pill').textContent = STAGE_NAMES[stage];
+  document.getElementById('hero-sub').textContent   = STAGE_SUBS[stage];
+  const c = document.getElementById('main-content');
+  c.innerHTML = '';
+  if      (stage === 0) renderGroups(c);
+  else if (stage === 1) renderR32(c);
+  else if (stage === 2) renderR16(c);
+  else if (stage === 3) renderQF(c);
+  else if (stage === 4) renderSF(c);
+  else                  renderFinal(c);
+  updateProgress();
+}
+
+function updateProgress() {
+  let groupDone = 0;
+  groups.forEach(g => { groupDone += (gPicks[g.name]||[]).length; });
+  const done = groupDone
+             + Object.keys(r32Picks).length
+             + Object.keys(r16Picks).length
+             + Object.keys(qfPicks).length
+             + Object.keys(sfPicks).length
+             + (finPick ? 1 : 0);
+  const total = 24 + 16 + 8 + 4 + 2 + 1;
+  document.getElementById('prog').style.width = Math.round(done / total * 100) + '%';
+}
+
+// ── STAGE 0: GROUPS ───────────────────────────────────────────────────
+function renderGroups(c) {
+  groups.forEach(g => {
+    const picks = gPicks[g.name] || [];
+    const div = document.createElement('div');
+    div.className = 'group-block';
+    const cnt = picks.length === 2
+      ? '<span style="color:#00a651;font-weight:700">✓ Done</span>'
+      : `<span class="group-count">${picks.length}/2 picked</span>`;
+    div.innerHTML = `<div class="group-label">Group ${g.name} ${cnt}</div>` +
+      g.teams.map(t => {
+        const idx = picks.indexOf(t.n);
+        const isFirst  = idx === 0;
+        const isSecond = idx === 1;
+        const isLocked = picks.length === 2 && idx === -1;
+        let cls = 'team-btn';
+        if (isFirst)  cls += ' first';
+        if (isSecond) cls += ' second';
+        if (isLocked) cls += ' locked';
+        const badge = isFirst  ? '<span class="badge b1">1st</span>'
+                    : isSecond ? '<span class="badge b2">2nd</span>' : '';
+        return `<button class="${cls}" onclick="pickTeam('${g.name}','${t.n}')">
+          <span class="flag-span">${t.f}</span>${t.n}${badge}
+        </button>`;
+      }).join('');
+    c.appendChild(div);
+  });
+
+  const groupsDone = groups.filter(g => (gPicks[g.name]||[]).length === 2).length;
+  addNote(c, groupsDone + ' / 12 groups completed');
+  if (groupsDone === 12) addAdvBtn(c, 'Go to Round of 32 →', () => { stage=1; render(); scrollUp(); });
+}
+
+function pickTeam(gName, tName) {
+  const picks = gPicks[gName] || [];
+  if (picks.includes(tName)) {
+    // deselect
+    gPicks[gName] = picks.filter(x => x !== tName);
+  } else if (picks.length < 2) {
+    gPicks[gName] = [...picks, tName];
+  }
+  render();
+}
+
+// ── STAGE 1: ROUND OF 32 ─────────────────────────────────────────────
+// 24 group qualifiers (12 group 1sts + 12 group 2nds) + 8 wildcards = 32 teams → 16 matches
+// Bracket:
+//   Match 0:  A1 vs WC1      Match 1:  B1 vs WC2
+//   Match 2:  C1 vs WC3      Match 3:  D1 vs WC4
+//   Match 4:  E1 vs WC5      Match 5:  F1 vs WC6
+//   Match 6:  G1 vs WC7      Match 7:  H1 vs WC8
+//   Match 8:  I1 vs L2       Match 9:  J1 vs K2
+//   Match 10: K1 vs J2       Match 11: L1 vs I2
+//   Match 12: A2 vs D2       Match 13: B2 vs C2
+//   Match 14: E2 vs H2       Match 15: F2 vs G2
+
+function getR32Matches() {
+  const f = groups.map(g => getTeam((gPicks[g.name]||[])[0])); // 1sts  [0..11]
+  const s = groups.map(g => getTeam((gPicks[g.name]||[])[1])); // 2nds  [0..11]
+  const wc = n => ({n:'Wildcard '+n, f:'🌍'});
+  return [
+    // 1st place vs wildcard (0-7)
+    {t1:f[0],  t2:wc(1),  wc:true},
+    {t1:f[1],  t2:wc(2),  wc:true},
+    {t1:f[2],  t2:wc(3),  wc:true},
+    {t1:f[3],  t2:wc(4),  wc:true},
+    {t1:f[4],  t2:wc(5),  wc:true},
+    {t1:f[5],  t2:wc(6),  wc:true},
+    {t1:f[6],  t2:wc(7),  wc:true},
+    {t1:f[7],  t2:wc(8),  wc:true},
+    // 1st vs 2nd cross matches (8-11)
+    {t1:f[8],  t2:s[11], wc:false},
+    {t1:f[9],  t2:s[10], wc:false},
+    {t1:f[10], t2:s[9],  wc:false},
+    {t1:f[11], t2:s[8],  wc:false},
+    // 2nd vs 2nd matches (12-15)
+    {t1:s[0],  t2:s[3],  wc:false},
+    {t1:s[1],  t2:s[2],  wc:false},
+    {t1:s[4],  t2:s[7],  wc:false},
+    {t1:s[5],  t2:s[6],  wc:false},
+  ];
+}
+
+function renderR32(c) {
+  const matches = getR32Matches();
+
+  // Auto-pick wildcard matches (group winner always wins vs wildcard)
+  matches.forEach((m, idx) => {
+    if (m.wc && !r32Picks[idx]) r32Picks[idx] = m.t1.n;
+  });
+
+  const labels = [
+    'Group Winners vs Wildcards (Auto-advance)',
+    'Group 1sts vs 2nds',
+    '2nd Place Battles'
+  ];
+
+  matches.forEach((m, idx) => {
+    if (idx === 0 || idx === 8 || idx === 12) {
+      const h = document.createElement('div');
+      h.className = 'round-header';
+      h.textContent = labels[idx === 0 ? 0 : idx === 8 ? 1 : 2];
+      c.appendChild(h);
+    }
+
+    const w = r32Picks[idx];
+    const card = document.createElement('div');
+    card.className = 'match-card';
+    if (m.wc) {
+      card.innerHTML = `
+        <div class="match-row">
+          <button class="match-team-btn winner" style="pointer-events:none">
+            <div style="font-size:20px">${m.t1.f}</div>
+            <div style="font-size:11px;margin-top:3px">${m.t1.n}</div>
+          </button>
+          <div class="vs">VS</div>
+          <button class="match-team-btn" style="opacity:0.35;pointer-events:none;border-style:dashed">
+            <div style="font-size:20px">🌍</div>
+            <div style="font-size:11px;margin-top:3px">Best 3rd Place</div>
+          </button>
+        </div>
+        <div style="font-size:10px;color:#00a651;text-align:center;margin-top:6px">Auto-advances ✓</div>`;
+    } else {
+      card.innerHTML = `
+        <div class="match-row">
+          <button class="match-team-btn${w===m.t1.n?' winner':''}" onclick="pickR32(${idx},'${m.t1.n}')">
+            <div style="font-size:20px">${m.t1.f}</div>
+            <div style="font-size:11px;margin-top:3px">${m.t1.n}</div>
+          </button>
+          <div class="vs">VS</div>
+          <button class="match-team-btn${w===m.t2.n?' winner':''}" onclick="pickR32(${idx},'${m.t2.n}')">
+            <div style="font-size:20px">${m.t2.f}</div>
+            <div style="font-size:11px;margin-top:3px">${m.t2.n}</div>
+          </button>
+        </div>`;
+    }
+    c.appendChild(card);
+  });
+
+  const realMatches = matches.filter(m => !m.wc).length;
+  const realPicked  = Object.keys(r32Picks).filter(k => !matches[k].wc).length;
+  addNote(c, realPicked + ' / ' + realMatches + ' matches picked (wildcards auto-advance)');
+  if (Object.keys(r32Picks).length === 16) addAdvBtn(c, 'Advance to Round of 16 →', () => { stage=2; render(); scrollUp(); });
+}
+
+function pickR32(idx, name) { r32Picks[idx] = name; render(); }
+
+// ── STAGE 2: ROUND OF 16 ─────────────────────────────────────────────
+// 16 R32 winners → 8 matches
+// Pair: 0v1, 2v3, 4v5, 6v7, 8v9, 10v11, 12v13, 14v15
+function getR16Matches() {
+  return [0,2,4,6,8,10,12,14].map((i,idx) => ({
+    id: idx,
+    t1: getTeam(r32Picks[i]),
+    t2: getTeam(r32Picks[i+1])
+  }));
+}
+
+function renderR16(c) {
+  getR16Matches().forEach((m) => {
+    const w = r16Picks[m.id];
+    const card = document.createElement('div');
+    card.className = 'match-card';
+    card.innerHTML = `
+      <div class="match-row">
+        <button class="match-team-btn${w===m.t1.n?' winner':''}" onclick="pickR16(${m.id},'${m.t1.n}')">
+          <div style="font-size:20px">${m.t1.f}</div>
+          <div style="font-size:11px;margin-top:3px">${m.t1.n}</div>
+        </button>
+        <div class="vs">VS</div>
+        <button class="match-team-btn${w===m.t2.n?' winner':''}" onclick="pickR16(${m.id},'${m.t2.n}')">
+          <div style="font-size:20px">${m.t2.f}</div>
+          <div style="font-size:11px;margin-top:3px">${m.t2.n}</div>
+        </button>
+      </div>`;
+    c.appendChild(card);
+  });
+  const done = Object.keys(r16Picks).length;
+  addNote(c, done + ' / 8 matches picked');
+  if (done === 8) addAdvBtn(c, 'Advance to Quarterfinals →', () => { stage=3; render(); scrollUp(); });
+}
+
+function pickR16(idx, name) { r16Picks[idx] = name; render(); }
+
+// ── STAGE 3: QUARTERFINALS ────────────────────────────────────────────
+function getQFMatches() {
+  const w = [0,1,2,3,4,5,6,7].map(i => getTeam(r16Picks[i]));
+  return [
+    {id:0, t1:w[0], t2:w[1]},
+    {id:1, t1:w[2], t2:w[3]},
+    {id:2, t1:w[4], t2:w[5]},
+    {id:3, t1:w[6], t2:w[7]},
+  ];
+}
+
+function renderQF(c) {
+  getQFMatches().forEach(m => {
+    const w = qfPicks[m.id];
+    const card = document.createElement('div');
+    card.className = 'match-card';
+    card.innerHTML = `
+      <div class="match-row">
+        <button class="match-team-btn${w===m.t1.n?' winner':''}" onclick="pickQF(${m.id},'${m.t1.n}')">
+          <div style="font-size:20px">${m.t1.f}</div>
+          <div style="font-size:11px;margin-top:3px">${m.t1.n}</div>
+        </button>
+        <div class="vs">VS</div>
+        <button class="match-team-btn${w===m.t2.n?' winner':''}" onclick="pickQF(${m.id},'${m.t2.n}')">
+          <div style="font-size:20px">${m.t2.f}</div>
+          <div style="font-size:11px;margin-top:3px">${m.t2.n}</div>
+        </button>
+      </div>`;
+    c.appendChild(card);
+  });
+  const done = Object.keys(qfPicks).length;
+  addNote(c, done + ' / 4 matches picked');
+  if (done === 4) addAdvBtn(c, 'Advance to Semifinals →', () => { stage=4; render(); scrollUp(); });
+}
+
+function pickQF(idx, name) { qfPicks[idx] = name; render(); }
+
+// ── STAGE 4: SEMIFINALS ───────────────────────────────────────────────
+function getSFMatches() {
+  return [
+    {id:0, t1:getTeam(qfPicks[0]), t2:getTeam(qfPicks[1])},
+    {id:1, t1:getTeam(qfPicks[2]), t2:getTeam(qfPicks[3])},
+  ];
+}
+
+function renderSF(c) {
+  getSFMatches().forEach(m => {
+    const w = sfPicks[m.id];
+    const card = document.createElement('div');
+    card.className = 'match-card';
+    card.innerHTML = `
+      <div class="match-row">
+        <button class="match-team-btn${w===m.t1.n?' winner':''}" onclick="pickSF(${m.id},'${m.t1.n}')">
+          <div style="font-size:20px">${m.t1.f}</div>
+          <div style="font-size:11px;margin-top:3px">${m.t1.n}</div>
+        </button>
+        <div class="vs">VS</div>
+        <button class="match-team-btn${w===m.t2.n?' winner':''}" onclick="pickSF(${m.id},'${m.t2.n}')">
+          <div style="font-size:20px">${m.t2.f}</div>
+          <div style="font-size:11px;margin-top:3px">${m.t2.n}</div>
+        </button>
+      </div>`;
+    c.appendChild(card);
+  });
+  const done = Object.keys(sfPicks).length;
+  addNote(c, done + ' / 2 matches picked');
+  if (done === 2) addAdvBtn(c, 'Advance to the Final →', () => { stage=5; render(); scrollUp(); });
+}
+
+function pickSF(idx, name) { sfPicks[idx] = name; render(); }
+
+// ── STAGE 5: FINAL ────────────────────────────────────────────────────
+function renderFinal(c) {
+  const t1 = getTeam(sfPicks[0]);
+  const t2 = getTeam(sfPicks[1]);
+  const card = document.createElement('div');
+  card.className = 'final-card';
+  card.innerHTML = `
+    <div class="final-label">⚽ The Grand Final ⚽</div>
+    <div class="match-row">
+      <button class="match-team-btn${finPick===t1.n?' winner':''}" onclick="pickFinal('${t1.n}')">
+        <div style="font-size:24px">${t1.f}</div>
+        <div style="font-size:11px;margin-top:4px">${t1.n}</div>
+      </button>
+      <div class="vs">VS</div>
+      <button class="match-team-btn${finPick===t2.n?' winner':''}" onclick="pickFinal('${t2.n}')">
+        <div style="font-size:24px">${t2.f}</div>
+        <div style="font-size:11px;margin-top:4px">${t2.n}</div>
+      </button>
+    </div>`;
+  c.appendChild(card);
+  if (finPick) {
+    const ch = getTeam(finPick);
+    const wrap = document.createElement('div');
+    wrap.className = 'champion-wrap';
+    wrap.innerHTML = `
+      <div style="font-size:28px;margin-bottom:1rem">🎉🏆🎉</div>
+      <span class="trophy-flag">${ch.f}</span>
+      <div class="champ-label">Your 2026 World Cup Champion</div>
+      <div class="champ-name">${ch.n}</div>
+      <div class="champ-tagline">You called it. Remember this moment.</div>
+      <div class="share-row">
+        <button class="share-btn primary" onclick="copyResult('${ch.n}','${ch.f}')">Copy & Share My Prediction</button>
+        <button class="share-btn secondary" onclick="resetAll()">Try Again</button>
+      </div>`;
+    c.appendChild(wrap);
+  }
+}
+
+function pickFinal(name) { finPick = name; render(); }
+
+// ── HELPERS ───────────────────────────────────────────────────────────
+function addNote(c, txt) {
+  const p = document.createElement('p');
+  p.className = 'note'; p.textContent = txt; c.appendChild(p);
+}
+function addAdvBtn(c, txt, fn) {
+  const btn = document.createElement('button');
+  btn.className = 'advance-btn'; btn.textContent = txt; btn.onclick = fn; c.appendChild(btn);
+}
+function scrollUp() { window.scrollTo({top:0,behavior:'smooth'}); }
+function copyResult(name, flag) {
+  const txt = '🏆 My FIFA World Cup 2026 Prediction:\n\nChampion: '+flag+' '+name+'\n\nMake your own prediction 👉 https://wc2026winner.netlify.app\n\n#WorldCup2026 #FIFA2026 #WC2026';
+  navigator.clipboard.writeText(txt)
+    .then(() => showToast('Copied! Paste & share!'))
+    .catch(() => showToast('Long-press to copy manually'));
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+function resetAll() {
+  gPicks={}; r32Picks={}; r16Picks={}; qfPicks={}; sfPicks={}; finPick=null; stage=0;
+  render(); scrollUp();
+}
+
+window.pickTeam=pickTeam; window.pickR32=pickR32; window.pickR16=pickR16;
+window.pickQF=pickQF; window.pickSF=pickSF; window.pickFinal=pickFinal;
+window.copyResult=copyResult; window.resetAll=resetAll;
+
+render();
+</script>
+</body>
+</html>
